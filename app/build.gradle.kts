@@ -1,8 +1,8 @@
 plugins {
-    java
-    application
-    checkstyle
-    jacoco
+    id("java")
+    id("application")
+    id("checkstyle")
+    id("jacoco")
     id("com.github.johnrengelman.shadow") version "8.1.1"
     id("io.freefair.lombok") version "8.4"
 }
@@ -32,6 +32,7 @@ dependencies {
 
     implementation("com.h2database:h2:2.2.220")
     implementation("com.zaxxer:HikariCP:5.1.0")
+    implementation("gg.jte:jte:3.1.9")
 }
 
 tasks.test {

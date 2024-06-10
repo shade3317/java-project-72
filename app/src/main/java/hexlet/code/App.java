@@ -14,6 +14,10 @@ import java.util.stream.Collectors;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import io.javalin.Javalin;
+import io.javalin.rendering.template.JavalinJte;
+import gg.jte.ContentType;
+import gg.jte.TemplateEngine;
+import gg.jte.resolve.ResourceCodeResolver;
 
 
 public class App {
@@ -40,18 +44,27 @@ public class App {
         BaseRepository.dataSource = dataSource;
 
         Javalin app = Javalin.create(config -> config.plugins.enableDevLogging());
+        JavalinJte.init(createTemplateEngine());
         app.get(NamedRoutes.ROOT_PATH, RootController::show);
+
         return app;
     }
 
     static int getPort() {
         String port = System.getenv().getOrDefault("PORT", "7070");
+
         return Integer.parseInt(port);
     }
 
     static String getDatabaseUrl() {
         return System.getenv()
                 .getOrDefault("JDBC_DATABASE_URL", "jdbc:h2:mem:project;DB_CLOSE_DELAY=-1;");
+    }
 
+    static TemplateEngine createTemplateEngine() {
+        ClassLoader          classLoader  = App.class.getClassLoader();
+        ResourceCodeResolver codeResolver = new ResourceCodeResolver("templates", classLoader);
+
+        return TemplateEngine.create(codeResolver, ContentType.Html);
     }
 }
