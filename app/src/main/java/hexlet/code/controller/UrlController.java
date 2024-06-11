@@ -49,7 +49,7 @@ public class UrlController implements CrudHandler {
             context.sessionAttribute("flashType", "danger");
             context.redirect(NamedRoutes.ROOT_PATH);
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            System.out.println(e.getSQLState());
         }
     }
 
@@ -70,7 +70,7 @@ public class UrlController implements CrudHandler {
         try {
             urls = UrlRepository.getEntities();
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            System.out.println(e.getSQLState());
         }
         var page = new UrlsPage(urls);
         context.render("url/index.jte", Collections.singletonMap("page", page));
@@ -84,11 +84,11 @@ public class UrlController implements CrudHandler {
     @Override
     public void getOne(@NotNull Context context, @NotNull String s) {
         Long id = context.pathParamAsClass("url-id", Long.class).get();
-        Url url;
+        Url url = null;
         try {
             url = UrlRepository.find(id).orElseThrow(() -> new NotFoundResponse("Url with ID: " + id + " not found"));
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            System.out.println(e.getSQLState());
         }
         UrlPage page = new UrlPage(url);
         context.render("url/show.jte", Collections.singletonMap("page", page));
