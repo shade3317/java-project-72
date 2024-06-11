@@ -33,7 +33,7 @@ public class UrlController {
             String authority = uri.getAuthority();
             var formattedUrl = String.format("%s://%s", protocol, authority);
 
-            if (UrlRepository.find(formattedUrl).isPresent()) {
+            if (UrlRepository.findByName(formattedUrl).isPresent()) {
                 page.setFlash("Страница уже существует");
                 page.setFlashType("warning");
             } else {
@@ -64,7 +64,7 @@ public class UrlController {
 
     public static void show(Context ctx) throws SQLException {
         var id      = ctx.pathParamAsClass("id", Long.class).get();
-        var url     = UrlRepository.find(id)
+        var url     = UrlRepository.findById(id)
                 .orElseThrow(() -> new NotFoundResponse("Сайт не найден!"));
         var checks  = UrlRepository.findChecksById(id);
         var urlPage = new UrlPage(url, checks);
@@ -73,7 +73,7 @@ public class UrlController {
 
     public static void check(Context ctx) throws SQLException {
         var id = ctx.pathParamAsClass("id", Long.class).get();
-        var url = UrlRepository.find(id)
+        var url = UrlRepository.findById(id)
                 .orElseThrow(() -> new NotFoundResponse("Сайт не найден"));
         var page = new BasePage();
         List<UrlCheck> checks = new ArrayList<>();
