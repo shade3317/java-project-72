@@ -1,27 +1,34 @@
-@import hexlet.code.dto.url.BuildUrlPage
+@import hexlet.code.dto.BasePage
 @import hexlet.code.util.NamedRoutes
 
-@param BuildUrlPage page = null
+@param BasePage page
 
 
 @template.layout.page(
+    page = page,
     content = @`
-        <h1 class="text-center">Main Page</h1>
-
-        @if(page != null && page.getFlash() != null)
-            <div class="alert alert-${page.getFlashType()}" role="alert">
-                ${page.getFlash()}
-            </div>
-        @endif
-
-        <div>
-            <form action="${NamedRoutes.URL_PATH}" method="post">
-                <div class="input-group mb-3">
-                    <span class="input-group-text" id="basic-addon1">Input site name</span>
-                    <input type="text" name="url" class="form-control" placeholder="www.example.com" aria-label="Site Name" aria-describedby="basic-addon1">
+        <div class="container-fluid bg-dark p-5">
+            <div class="row">
+                <div class="col-md-10 col-lg-8 mx-auto text-white">
+                    <h1 class="display-3 mb-0">Анализатор страниц</h1>
+                    <p class="lead">Бесплатно проверяйте сайты на SEO пригодность</p>
+                    <form action="${NamedRoutes.urlsPath()}" method="post" class="rss-form text-body">
+                        <div class="row">
+                            <div class="col">
+                                <div class="form-floating">
+                                    <input id="url-input" autofocus type="text" required name="url" aria-label="url"
+                                           class="form-control w-100" placeholder="ссылка" autocomplete="off">
+                                    <label for="url-input">Ссылка</label>
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <button type="submit" class="h-100 btn btn-lg btn-primary px-sm-5">Проверить</button>
+                            </div>
+                        </div>
+                    </form>
+                    <p class="mt-2 mb-0 text-muted">Пример: https://www.example.com</p>
                 </div>
-                <input type="submit" class="btn btn-primary mb-3" value="Submit" />
-            </form>
+            </div>
         </div>
     `
 )

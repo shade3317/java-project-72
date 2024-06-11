@@ -16,7 +16,6 @@ import io.javalin.validation.ValidationError;
 @Getter
 @Setter
 public class BuildUrlPage extends BasePage {
-
     private String string;
     private Map<String, List<ValidationError<Object>>> errors;
 }

@@ -1,33 +1,50 @@
+@import hexlet.code.dto.BasePage
 @import hexlet.code.dto.url.UrlsPage
-@import hexlet.code.model.Url
 @import hexlet.code.util.NamedRoutes
-@import static hexlet.code.util.NamedRoutes.getUrlPath
 
-@param UrlsPage page
+@import java.time.format.DateTimeFormatter
+
+@param BasePage page
+@param UrlsPage urlsPage
 
 
 @template.layout.page(
+    page = page,
     content = @`
-        <table class="table table-striped">
-            @for(Url url : page.getUrls())
-                <tr>
-                    <td>
-                        ${url.getId()}
-                    </td>
-                    <td>
-                        <a href="${getUrlPath(url.getId())}">${url.getName()}</a>
-                    </td>
-                    <td>
-                    ${url.getCreatedAt().toGMTString()}
-                    </td>
-                </tr>
-            @endfor
-        </table>
-        @if(page.getUrls().isEmpty())
-            <div class="alert alert-info" role="alert">
-                There is no any URLs added yet.
+        <div class="container mt-5">
+            <div class="row">
+                <div class="container-lg mt-5">
+                    <h1>Сайты</h1>
+                    <table class="table table-bordered table-hover mt-3">
+                        <thead>
+                        <tr>
+                            <th class="col-1">ID</th>
+                            <th>Имя</th>
+                            <th class="col-2">Последняя проверка</th>
+                            <th class="col-1">Код ответа</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                            @for(var url : urlsPage.getUrls())
+                                <tr>
+                                    <td>${url.getId()}</td>
+                                    <td><a href="${NamedRoutes.urlPath(url.getId())}">${url.getName()}</a></td>
+                                    <td>
+                                        @if(url.getUrlCheckList() != null)
+                                            ${url.getLastDateCheck().toLocalDateTime().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"))}
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if(url.getUrlCheckList() != null)
+                                            ${url.getLastStatusCodeCheck()}
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endfor
+                        </tbody>
+                    </table>
+                </div>
             </div>
-            <a class="btn btn-primary" href="${NamedRoutes.ROOT_PATH}" role="button">Add some URL</a>
-        @endif
+        </div>
     `
 )

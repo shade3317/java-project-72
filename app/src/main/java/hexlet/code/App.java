@@ -5,63 +5,73 @@ import hexlet.code.util.NamedRoutes;
 import hexlet.code.controller.UrlController;
 
 import java.io.BufferedReader;
-import java.io.InputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
-import java.sql.Connection;
+import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.stream.Collectors;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import io.javalin.Javalin;
 import io.javalin.rendering.template.JavalinJte;
-import static io.javalin.apibuilder.ApiBuilder.crud;
 import gg.jte.ContentType;
 import gg.jte.TemplateEngine;
 import gg.jte.resolve.ResourceCodeResolver;
+import lombok.extern.slf4j.Slf4j;
 
 
+@Slf4j
 public class App {
-    public static void main(String[] args) throws SQLException {
-        Javalin app = getApp();
-        app.start(getPort());
+    public static void main(String[] args) throws SQLException, IOException {
+        getApp().start(getPort());
     }
 
-    public static Javalin getApp() throws SQLException {
-        HikariConfig     hikariConfig   = new HikariConfig();
-        hikariConfig.setJdbcUrl(getDatabaseUrl());
-        HikariDataSource dataSource     = new HikariDataSource(hikariConfig);
-        InputStream      inputStream    = App.class.getClassLoader().getResourceAsStream("schema.sql");
+    public static Javalin getApp() throws SQLException, IOException {
+        String databaseUrl = System.getenv()
+                .getOrDefault("JDBC_DATABASE_URL", "jdbc:h2:mem:project;DB_CLOSE_DELAY=-1;");
+        String databaseUsername = System.getenv()
+                .getOrDefault("JDBC_DATABASE_USERNAME", null);
+        String databasePassword = System.getenv()
+                .getOrDefault("JDBC_DATABASE_PASSWORD", null);
 
-        String sql = new BufferedReader(new InputStreamReader(inputStream))
-                .lines()
-                .collect(Collectors.joining("\n"));
+        var hikariConfig = new HikariConfig();
+        hikariConfig.setUsername(databaseUsername);
+        hikariConfig.setPassword(databasePassword);
+        hikariConfig.setJdbcUrl(databaseUrl);
 
-        try (Connection connection = dataSource.getConnection();
-             Statement statement = connection.createStatement()) {
+        var dataSource = new HikariDataSource(hikariConfig);
+        var sql = readResourceFile("schema.sql");
+
+        log.info(sql);
+
+        try (var connection = dataSource.getConnection();
+             var statement = connection.createStatement()) {
             statement.execute(sql);
         }
-
         BaseRepository.dataSource = dataSource;
 
-        Javalin app = Javalin.create(config -> config.plugins.enableDevLogging());
-        JavalinJte.init(createTemplateEngine());
-        setRoutes(app);
+        var app = Javalin.create(config -> {
+            if (databaseUrl.contains("h2:mem")) {
+                config.bundledPlugins.enableDevLogging();
+            }
+            config.fileRenderer(new JavalinJte(createTemplateEngine()));
+        });
+
+        app.get(NamedRoutes.rootPath(), RootController::index);
+        app.post(NamedRoutes.urlsPath(), UrlController::create);
+        app.get(NamedRoutes.urlsPath(), UrlController::index);
+        app.get(NamedRoutes.urlPath("{id}"), UrlController::show);
+        app.post(NamedRoutes.urlCheckPath("{id}"), UrlController::check);
 
         return app;
     }
 
     static int getPort() {
         String port = System.getenv().getOrDefault("PORT", "7070");
-
         return Integer.parseInt(port);
     }
 
-    static String getDatabaseUrl() {
-        return System.getenv()
-                .getOrDefault("JDBC_DATABASE_URL", "jdbc:h2:mem:project;DB_CLOSE_DELAY=-1;");
-    }
 
     static TemplateEngine createTemplateEngine() {
         ClassLoader          classLoader  = App.class.getClassLoader();
@@ -70,12 +80,11 @@ public class App {
         return TemplateEngine.create(codeResolver, ContentType.Html);
     }
 
-    static void setRoutes(Javalin app) {
-        app.get(NamedRoutes.ROOT_PATH, RootController::show);
-
-        app.routes(() -> {
-            crud("urls/{url-id}", new UrlController());
-        });
+    public static String readResourceFile(String fileName) throws IOException {
+        var inputStream = App.class.getClassLoader().getResourceAsStream(fileName);
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+            return reader.lines().collect(Collectors.joining("\n"));
+        }
     }
 }
 

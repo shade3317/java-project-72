@@ -1,104 +1,103 @@
 package hexlet.code.controller;
+import hexlet.code.dto.BasePage;
 import hexlet.code.dto.url.UrlPage;
 import hexlet.code.dto.url.UrlsPage;
 import hexlet.code.model.Url;
+import hexlet.code.model.UrlCheck;
 import hexlet.code.repository.UrlRepository;
-import hexlet.code.util.NamedRoutes;
-import hexlet.code.util.Utilities;
 
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
-import org.jetbrains.annotations.NotNull;
+import java.util.Map;
+import java.util.Collections;
 
-import io.javalin.apibuilder.CrudHandler;
 import io.javalin.http.Context;
 import io.javalin.http.NotFoundResponse;
+import kong.unirest.Unirest;
+import kong.unirest.UnirestException;
+import org.jsoup.Jsoup;
 
 
-public class UrlController implements CrudHandler {
-    /**
-     * @param context
-     */
-    @Override
-    public void create(@NotNull Context context) {
-        String string = context.formParam("url");
+public class UrlController {
+    public static void create(Context ctx) throws SQLException {
+        var page = new BasePage();
+
         try {
-            URI uri       = new URL(string).toURI();
-            String name   = Utilities.uriToString(uri);
-            boolean check = UrlRepository.find(name).isPresent();
-            if (check) {
-                context.sessionAttribute("flash", "Страница уже существует");
-                context.sessionAttribute("flashType", "danger");
-                context.redirect(NamedRoutes.ROOT_PATH);
-                return;
+            var url          = ctx.formParamAsClass("url", String.class).get();
+            var uri          = new URI(url).toURL();
+            String protocol  = uri.getProtocol();
+            String authority = uri.getAuthority();
+            var formattedUrl = String.format("%s://%s", protocol, authority);
+
+            if (UrlRepository.find(formattedUrl).isPresent()) {
+                page.setFlash("Страница уже существует");
+                page.setFlashType("warning");
+            } else {
+                var urlName = new Url(formattedUrl);
+                UrlRepository.save(urlName);
+                page.setFlash("Страница успешно добавлена");
+                page.setFlashType("success");
             }
-            Url urlToSave = new Url(name, Timestamp.valueOf(LocalDateTime.now()));
-            UrlRepository.save(urlToSave);
-            context.sessionAttribute("flash", "Страница успешно добавлена");
-            context.sessionAttribute("flashType", "success");
-            context.redirect(NamedRoutes.ROOT_PATH);
-        } catch (URISyntaxException | MalformedURLException e) {
-            context.sessionAttribute("flash", "Некорректный URL");
-            context.sessionAttribute("flashType", "danger");
-            context.redirect(NamedRoutes.ROOT_PATH);
-        } catch (SQLException e) {
-            System.out.println(e.getSQLState());
+
+            var urls          = UrlRepository.getEntities();
+            var urlsWithCheck = UrlRepository.findLastCheck(urls);
+            var urlsPage      = new UrlsPage(urlsWithCheck);
+
+            ctx.render("urls/index.jte", Map.of("page", page, "urlsPage", urlsPage));
+        } catch (MalformedURLException | URISyntaxException e) {
+            page.setFlash("Некорректный URL");
+            page.setFlashType("danger");
+            ctx.render("index.jte", Collections.singletonMap("page", page));
         }
     }
 
-    /**
-     * @param context
-     * @param s
-     */
-    @Override
-    public void delete(@NotNull Context context, @NotNull String s) {
+    public static void index(Context ctx) throws SQLException {
+        var urls          = UrlRepository.getEntities();
+        var urlsWithCheck = UrlRepository.findLastCheck(urls);
+        var urlsPage      = new UrlsPage(urlsWithCheck);
+        ctx.render("urls/index.jte", Collections.singletonMap("urlsPage", urlsPage));
     }
 
-    /**
-     * @param context
-     */
-    @Override
-    public void getAll(@NotNull Context context) {
-        List<Url> urls = null;
+    public static void show(Context ctx) throws SQLException {
+        var id      = ctx.pathParamAsClass("id", Long.class).get();
+        var url     = UrlRepository.find(id)
+                .orElseThrow(() -> new NotFoundResponse("Сайт не найден!"));
+        var checks  = UrlRepository.findChecksById(id);
+        var urlPage = new UrlPage(url, checks);
+        ctx.render("urls/show.jte", Collections.singletonMap("urlPage", urlPage));
+    }
+
+    public static void check(Context ctx) throws SQLException {
+        var id = ctx.pathParamAsClass("id", Long.class).get();
+        var url = UrlRepository.find(id)
+                .orElseThrow(() -> new NotFoundResponse("Сайт не найден"));
+        var page = new BasePage();
+        List<UrlCheck> checks = new ArrayList<>();
         try {
-            urls = UrlRepository.getEntities();
-        } catch (SQLException e) {
-            System.out.println(e.getSQLState());
+            var response = Unirest.get(url.getName()).asString();
+            var body = response.getBody();
+            var html = Jsoup.parse(body);
+            var title = html.title();
+            var h1 = (html.selectFirst("h1") == null)
+                    ? null : html.selectFirst("h1").text();
+            var description = (html.selectFirst("meta[name=description]") == null)
+                    ? null : html.selectFirst("meta[name=description]").attr("content");
+            var statusCode = response.getStatus();
+            var urlCheck = new UrlCheck(statusCode, title, h1, description, id, url.getCreatedAt());
+            urlCheck.setUrlId(id);
+            UrlRepository.saveCheck(urlCheck);
+            checks = UrlRepository.findChecksById(url.getId());
+            page.setFlash("Страница успешно проверена");
+            page.setFlashType("success");
+        } catch (UnirestException e) {
+            page.setFlash("Некорреткный адрес");
+            page.setFlashType("danger");
         }
-        var page = new UrlsPage(urls);
-        context.render("url/index.jte", Collections.singletonMap("page", page));
-
-    }
-
-    /**
-     * @param context
-     * @param s
-     */
-    @Override
-    public void getOne(@NotNull Context context, @NotNull String s) {
-        Long id = context.pathParamAsClass("url-id", Long.class).get();
-        Url url = null;
-        try {
-            url = UrlRepository.find(id).orElseThrow(() -> new NotFoundResponse("Url with ID: " + id + " not found"));
-        } catch (SQLException e) {
-            System.out.println(e.getSQLState());
-        }
-        UrlPage page = new UrlPage(url);
-        context.render("url/show.jte", Collections.singletonMap("page", page));
-    }
-
-    /**
-     * @param context
-     * @param s
-     */
-    @Override
-    public void update(@NotNull Context context, @NotNull String s) {
+        var urlPage = new UrlPage(url, checks);
+        ctx.render("urls/show.jte", Map.of("page", page, "urlPage", urlPage));
     }
 }
