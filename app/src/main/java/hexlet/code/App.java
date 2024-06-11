@@ -8,6 +8,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.sql.DriverManager;
+import org.postgresql.Driver;
 import java.sql.SQLException;
 import java.util.stream.Collectors;
 
@@ -28,6 +30,9 @@ public class App {
     }
 
     public static Javalin getApp() throws SQLException, IOException {
+        DriverManager.registerDriver(new Driver());
+        DriverManager.drivers().forEach(d -> log.info(d.toString()));
+
         String databaseUrl = System.getenv()
                 .getOrDefault("JDBC_DATABASE_URL", "jdbc:h2:mem:project;DB_CLOSE_DELAY=-1;");
         String databaseUsername = System.getenv()
@@ -39,6 +44,7 @@ public class App {
         hikariConfig.setUsername(databaseUsername);
         hikariConfig.setPassword(databasePassword);
         hikariConfig.setJdbcUrl(databaseUrl);
+
 
         var dataSource = new HikariDataSource(hikariConfig);
         var sql = readResourceFile("schema.sql");
