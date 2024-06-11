@@ -1,8 +1,10 @@
 package hexlet.code.repository;
 
-import com.zaxxer.hikari.HikariDataSource;
 import lombok.Getter;
 import lombok.Setter;
+
+import com.zaxxer.hikari.HikariDataSource;
+
 
 @Getter
 @Setter
