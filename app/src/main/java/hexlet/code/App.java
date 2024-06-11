@@ -30,7 +30,21 @@ public class App {
 
     public static Javalin getApp() throws SQLException {
         HikariConfig     hikariConfig   = new HikariConfig();
-        hikariConfig.setJdbcUrl(getDatabaseUrl());
+        //hikariConfig.setJdbcUrl(getDatabaseUrl());
+
+
+        //
+        var jdbcUrl = getJDBCUrl();
+
+        if (!jdbcUrl.equals("jdbc:h2:mem:project;DB_CLOSE_DELAY=-1;")) {
+            hikariConfig.setUsername(System.getenv("JDBC_DATABASE_USERNAME"));
+            hikariConfig.setPassword(System.getenv("JDBC_DATABASE_PASSWORD"));
+        }
+
+        hikariConfig.setJdbcUrl(jdbcUrl);
+        //
+
+
         HikariDataSource dataSource     = new HikariDataSource(hikariConfig);
         InputStream      inputStream    = App.class.getClassLoader().getResourceAsStream("schema.sql");
 
@@ -77,4 +91,11 @@ public class App {
             crud("urls/{url-id}", new UrlController());
         });
     }
+
+
+    private static String getJDBCUrl() {
+        return System.getenv().getOrDefault("JDBC_DATABASE_URL", "jdbc:h2:mem:project;DB_CLOSE_DELAY=-1;");
+    }
+
+
 }
