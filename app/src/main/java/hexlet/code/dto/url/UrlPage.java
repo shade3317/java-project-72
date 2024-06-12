@@ -10,14 +10,14 @@ import lombok.Getter;
 
 @Getter
 public class UrlPage extends BasePage {
-    private Url url;
+    private Url            url;
     private List<UrlCheck> urlChecks;
 
     public UrlPage(Url url) {
         this.url = url;
     }
     public UrlPage(Url url, List<UrlCheck> urlChecks) {
-        this.url = url;
+        this.url       = url;
         this.urlChecks = urlChecks;
     }
     public List<UrlCheck> getUrlChecks() {

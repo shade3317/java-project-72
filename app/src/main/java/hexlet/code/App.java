@@ -3,36 +3,25 @@ import hexlet.code.controller.RootController;
 import hexlet.code.repository.BaseRepository;
 import hexlet.code.util.NamedRoutes;
 import hexlet.code.controller.UrlController;
+import hexlet.code.util.Utilities;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-//import java.sql.DriverManager;
-//import org.postgresql.Driver;
 import java.sql.SQLException;
-import java.util.stream.Collectors;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import io.javalin.Javalin;
 import io.javalin.rendering.template.JavalinJte;
-import gg.jte.ContentType;
-import gg.jte.TemplateEngine;
-import gg.jte.resolve.ResourceCodeResolver;
 import lombok.extern.slf4j.Slf4j;
 
 
 @Slf4j
 public class App {
     public static void main(String[] args) throws SQLException, IOException {
-        getApp().start(getPort());
+        getApp().start(Utilities.getPort());
     }
 
     public static Javalin getApp() throws SQLException, IOException {
-        //DriverManager.registerDriver(new Driver());
-        //DriverManager.drivers().forEach(d -> log.info(d.toString()));
-
         String databaseUrl = System.getenv()
                 .getOrDefault("JDBC_DATABASE_URL", "jdbc:h2:mem:project;DB_CLOSE_DELAY=-1;");
         String databaseUsername = System.getenv()
@@ -47,7 +36,7 @@ public class App {
 
 
         var dataSource = new HikariDataSource(hikariConfig);
-        var sql = readResourceFile("schema.sql");
+        var sql = Utilities.readResourceFile("schema.sql");
 
         log.info(sql);
 
@@ -61,7 +50,7 @@ public class App {
             if (databaseUrl.contains("h2:mem")) {
                 config.bundledPlugins.enableDevLogging();
             }
-            config.fileRenderer(new JavalinJte(createTemplateEngine()));
+            config.fileRenderer(new JavalinJte(Utilities.createTemplateEngine()));
         });
 
         app.get(NamedRoutes.rootPath(), RootController::index);
@@ -73,24 +62,6 @@ public class App {
         return app;
     }
 
-    static int getPort() {
-        String port = System.getenv().getOrDefault("PORT", "7070");
-        return Integer.parseInt(port);
-    }
 
-
-    static TemplateEngine createTemplateEngine() {
-        ClassLoader          classLoader  = App.class.getClassLoader();
-        ResourceCodeResolver codeResolver = new ResourceCodeResolver("templates", classLoader);
-
-        return TemplateEngine.create(codeResolver, ContentType.Html);
-    }
-
-    public static String readResourceFile(String fileName) throws IOException {
-        var inputStream = App.class.getClassLoader().getResourceAsStream(fileName);
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
-            return reader.lines().collect(Collectors.joining("\n"));
-        }
-    }
 }
 

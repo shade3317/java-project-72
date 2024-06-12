@@ -51,6 +51,7 @@ public class UrlController {
         } catch (MalformedURLException | URISyntaxException e) {
             page.setFlash("Некорректный URL");
             page.setFlashType("danger");
+
             ctx.render("index.jte", Collections.singletonMap("page", page));
         }
     }
@@ -59,6 +60,7 @@ public class UrlController {
         var urls          = UrlRepository.getEntities();
         var urlsWithCheck = UrlRepository.findLastCheck(urls);
         var urlsPage      = new UrlsPage(urlsWithCheck);
+
         ctx.render("urls/index.jte", Collections.singletonMap("urlsPage", urlsPage));
     }
 
@@ -68,25 +70,28 @@ public class UrlController {
                 .orElseThrow(() -> new NotFoundResponse("Сайт не найден!"));
         var checks  = UrlRepository.findChecksById(id);
         var urlPage = new UrlPage(url, checks);
+
         ctx.render("urls/show.jte", Collections.singletonMap("urlPage", urlPage));
     }
 
     public static void check(Context ctx) throws SQLException {
-        var id = ctx.pathParamAsClass("id", Long.class).get();
-        var url = UrlRepository.findById(id)
+        var id   = ctx.pathParamAsClass("id", Long.class).get();
+        var url  = UrlRepository.findById(id)
                 .orElseThrow(() -> new NotFoundResponse("Сайт не найден"));
         var page = new BasePage();
         List<UrlCheck> checks = new ArrayList<>();
+
         try {
-            var response = Unirest.get(url.getName()).asString();
-            var body = response.getBody();
-            var html = Jsoup.parse(body);
-            var title = html.title();
-            var h1 = (html.selectFirst("h1") == null)
+            var response    = Unirest.get(url.getName()).asString();
+            var body        = response.getBody();
+            var html        = Jsoup.parse(body);
+            var title       = html.title();
+            var h1          = (html.selectFirst("h1") == null)
                     ? null : html.selectFirst("h1").text();
             var description = (html.selectFirst("meta[name=description]") == null)
                     ? null : html.selectFirst("meta[name=description]").attr("content");
-            var statusCode = response.getStatus();
+            var statusCode  = response.getStatus();
+
             var urlCheck = new UrlCheck(statusCode, title, h1, description, id, url.getCreatedAt());
             urlCheck.setUrlId(id);
             UrlRepository.saveCheck(urlCheck);
@@ -97,6 +102,7 @@ public class UrlController {
             page.setFlash("Некорреткный адрес");
             page.setFlashType("danger");
         }
+
         var urlPage = new UrlPage(url, checks);
         ctx.render("urls/show.jte", Map.of("page", page, "urlPage", urlPage));
     }

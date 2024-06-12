@@ -18,10 +18,6 @@ public class NamedRoutes {
         return "/urls/".concat(id);
     }
 
-    public static String urlCheckPath(Long id) {
-        return urlCheckPath(String.valueOf(id));
-    }
-
     public static String urlCheckPath(String id) {
         return "/urls/" + id + "/checks";
     }
