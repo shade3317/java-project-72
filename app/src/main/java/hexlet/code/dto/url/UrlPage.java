@@ -20,7 +20,7 @@ public class UrlPage extends BasePage {
         this.url       = url;
         this.urlChecks = urlChecks;
     }
-    public List<UrlCheck> getUrlChecks() {
+    public final List<UrlCheck> getUrlChecks() {
         return urlChecks.stream()
                 .sorted((c1, c2) -> Long.compare(c2.getId(), c1.getId()))
                 .collect(Collectors.toList());
