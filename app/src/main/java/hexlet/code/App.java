@@ -22,26 +22,21 @@ public class App {
     }
 
     public static Javalin getApp() throws SQLException, IOException {
-        String databaseUrl = System.getenv()
-                .getOrDefault("JDBC_DATABASE_URL", "jdbc:h2:mem:project;DB_CLOSE_DELAY=-1;");
-        String databaseUsername = System.getenv()
-                .getOrDefault("JDBC_DATABASE_USERNAME", null);
-        String databasePassword = System.getenv()
-                .getOrDefault("JDBC_DATABASE_PASSWORD", null);
+        String databaseUrl      = System.getenv().getOrDefault("JDBC_DATABASE_URL",
+                                                         "jdbc:h2:mem:project;DB_CLOSE_DELAY=-1;");
+        String databaseUsername = System.getenv().getOrDefault("JDBC_DATABASE_USERNAME", null);
+        String databasePassword = System.getenv().getOrDefault("JDBC_DATABASE_PASSWORD", null);
 
         var hikariConfig = new HikariConfig();
         hikariConfig.setUsername(databaseUsername);
         hikariConfig.setPassword(databasePassword);
         hikariConfig.setJdbcUrl(databaseUrl);
 
-
         var dataSource = new HikariDataSource(hikariConfig);
-        var sql = Utilities.readResourceFile("schema.sql");
-
-        log.info(sql);
+        var sql        = Utilities.readResourceFile("schema.sql");
 
         try (var connection = dataSource.getConnection();
-             var statement = connection.createStatement()) {
+             var statement  = connection.createStatement()) {
             statement.execute(sql);
         }
         BaseRepository.dataSource = dataSource;
@@ -61,7 +56,6 @@ public class App {
 
         return app;
     }
-
-
 }
+
 
