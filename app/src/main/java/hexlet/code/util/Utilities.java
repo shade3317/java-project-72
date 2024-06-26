@@ -18,7 +18,6 @@ public class Utilities {
         return Integer.parseInt(port);
     }
 
-
     public static TemplateEngine createTemplateEngine() {
         ClassLoader          classLoader  = App.class.getClassLoader();
         ResourceCodeResolver codeResolver = new ResourceCodeResolver("templates", classLoader);

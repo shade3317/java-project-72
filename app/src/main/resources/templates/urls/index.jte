@@ -1,11 +1,10 @@
-@import hexlet.code.dto.BasePage
 @import hexlet.code.dto.url.UrlsPage
 @import hexlet.code.util.NamedRoutes
 
 @import java.time.format.DateTimeFormatter
 
-@param BasePage page
-@param UrlsPage urlsPage
+@param UrlsPage page
+@param DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss")
 
 
 @template.layout.page(
@@ -25,20 +24,19 @@
                         </tr>
                         </thead>
                         <tbody>
-                            @for(var url : urlsPage.getUrls())
+                            @for(var url : page.getUrls())
                                 <tr>
                                     <td>${url.getId()}</td>
                                     <td><a href="${NamedRoutes.urlPath(url.getId())}">${url.getName()}</a></td>
-                                    <td>
-                                        @if(url.getUrlCheckList() != null)
-                                            ${url.getLastDateCheck().toLocalDateTime().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"))}
-                                        @endif
-                                    </td>
-                                    <td>
-                                        @if(url.getUrlCheckList() != null)
-                                            ${url.getLastStatusCodeCheck()}
-                                        @endif
-                                    </td>
+                                    @if (page.getLatestChecks().get(url.getId()) != null)
+                                        <td>
+                                            ${formatter.format(page.getLatestChecks().get(url.getId()).getCreatedAt().toLocalDateTime())}
+                                        </td>
+                                        <td>${page.getLatestChecks().get(url.getId()).getStatusCode()}</td>
+                                    @else
+                                        <td></td>
+                                        <td></td>
+                                    @endif
                                 </tr>
                             @endfor
                         </tbody>

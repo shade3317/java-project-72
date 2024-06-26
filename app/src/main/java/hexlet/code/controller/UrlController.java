@@ -16,7 +16,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Collections;
 
+import hexlet.code.util.NamedRoutes;
 import io.javalin.http.Context;
+import io.javalin.http.HttpStatus;
 import io.javalin.http.NotFoundResponse;
 import io.javalin.validation.ValidationException;
 import kong.unirest.Unirest;
@@ -46,26 +48,22 @@ public class UrlController {
         if (UrlRepository.findByName(formattedUrl).isPresent()) {
             page.setFlash("Страница уже существует");
             page.setFlashType("warning");
+            ctx.redirect(NamedRoutes.urlsPath(), HttpStatus.FOUND);
         } else {
             var urlName = new Url(formattedUrl);
             UrlRepository.save(urlName);
             page.setFlash("Страница успешно добавлена");
             page.setFlashType("success");
+            ctx.redirect(NamedRoutes.urlsPath(), HttpStatus.FOUND);
         }
-
-        var urls      = UrlRepository.getEntities();
-        var urlChecks = UrlCheckRepository.findLastCheck();
-        var urlsPage  = new UrlsPage(urls, urlChecks);
-
-        ctx.render("urls/index.jte", Map.of("page", page, "urlsPage", urlsPage));
     }
 
     public static void index(Context ctx) throws SQLException {
         var urls      = UrlRepository.getEntities();
         var urlChecks = UrlCheckRepository.findLastCheck();
-        var urlsPage  = new UrlsPage(urls, urlChecks);
+        var page  = new UrlsPage(urls, urlChecks);
 
-        ctx.render("urls/index.jte", Collections.singletonMap("urlsPage", urlsPage));
+        ctx.render("urls/index.jte", Collections.singletonMap("page", page));
     }
 
     public static void show(Context ctx) throws SQLException {
