@@ -1,14 +1,12 @@
 package hexlet.code.repository;
 import hexlet.code.model.Url;
 import hexlet.code.model.UrlCheck;
-import hexlet.code.util.Utilities;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -23,7 +21,7 @@ public class UrlRepository extends BaseRepository {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            var timestamp     = Utilities.getDateFormat(Timestamp.valueOf(LocalDateTime.now()), "yyyy-MM-dd hh:mm:ss");
+            var timestamp     = new Timestamp(System.currentTimeMillis());
             preparedStatement.setString(1, url.getName());
             preparedStatement.setTimestamp(2, timestamp);
             preparedStatement.executeUpdate();
@@ -110,8 +108,7 @@ public class UrlRepository extends BaseRepository {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            var timestamp = Timestamp.valueOf(LocalDateTime.now());
-            var createdAt = Utilities.getDateFormat(timestamp, "yyyy-MM-dd hh:mm:ss");
+            var createdAt = new Timestamp(System.currentTimeMillis());
             preparedStatement.setLong(1, urlCheck.getUrlId());
             preparedStatement.setInt(2, urlCheck.getStatusCode());
             preparedStatement.setString(3, urlCheck.getTitle());
