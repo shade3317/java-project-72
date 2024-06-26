@@ -5,8 +5,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 import java.util.stream.Collectors;
 
 import gg.jte.ContentType;
@@ -15,11 +13,6 @@ import gg.jte.resolve.ResourceCodeResolver;
 
 
 public class Utilities {
-    public static Timestamp getDateFormat(Timestamp timestamp, String pattern) {
-        SimpleDateFormat formatter = new SimpleDateFormat(pattern);
-        return Timestamp.valueOf(formatter.format(timestamp));
-    }
-
     public static int getPort() {
         String port = System.getenv().getOrDefault("PORT", "7070");
         return Integer.parseInt(port);

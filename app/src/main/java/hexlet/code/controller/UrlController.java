@@ -5,7 +5,7 @@ import hexlet.code.dto.url.UrlsPage;
 import hexlet.code.model.Url;
 import hexlet.code.model.UrlCheck;
 import hexlet.code.repository.UrlRepository;
-import hexlet.code.repository.UrlCheckController;
+import hexlet.code.repository.UrlCheckRepository;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -53,17 +53,17 @@ public class UrlController {
             page.setFlashType("success");
         }
 
-        var urls          = UrlRepository.getEntities();
-        var urlsWithCheck = UrlCheckController.findLastCheck(urls);
-        var urlsPage      = new UrlsPage(urlsWithCheck);
+        var urls      = UrlRepository.getEntities();
+        var urlChecks = UrlCheckRepository.findLastCheck();
+        var urlsPage  = new UrlsPage(urls, urlChecks);
 
         ctx.render("urls/index.jte", Map.of("page", page, "urlsPage", urlsPage));
     }
 
     public static void index(Context ctx) throws SQLException {
-        var urls          = UrlRepository.getEntities();
-        var urlsWithCheck = UrlCheckController.findLastCheck(urls);
-        var urlsPage      = new UrlsPage(urlsWithCheck);
+        var urls      = UrlRepository.getEntities();
+        var urlChecks = UrlCheckRepository.findLastCheck();
+        var urlsPage  = new UrlsPage(urls, urlChecks);
 
         ctx.render("urls/index.jte", Collections.singletonMap("urlsPage", urlsPage));
     }
@@ -72,7 +72,7 @@ public class UrlController {
         var id      = ctx.pathParamAsClass("id", Long.class).get();
         var url     = UrlRepository.findById(id)
                 .orElseThrow(() -> new NotFoundResponse("Сайт не найден!"));
-        var checks  = UrlCheckController.findChecksById(id);
+        var checks  = UrlCheckRepository.findChecksById(id);
         var urlPage = new UrlPage(url, checks);
 
         ctx.render("urls/show.jte", Collections.singletonMap("urlPage", urlPage));
@@ -98,8 +98,8 @@ public class UrlController {
 
             var urlCheck = new UrlCheck(statusCode, title, h1, description, id, url.getCreatedAt());
             urlCheck.setUrlId(id);
-            UrlCheckController.saveCheck(urlCheck);
-            checks = UrlCheckController.findChecksById(url.getId());
+            UrlCheckRepository.saveCheck(urlCheck);
+            checks = UrlCheckRepository.findChecksById(url.getId());
             page.setFlash("Страница успешно проверена");
             page.setFlashType("success");
         } catch (UnirestException e) {

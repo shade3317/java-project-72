@@ -1,5 +1,4 @@
 package hexlet.code.repository;
-import hexlet.code.model.Url;
 import hexlet.code.model.UrlCheck;
 
 import java.sql.Connection;
@@ -8,10 +7,12 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
-public class UrlCheckController extends BaseRepository {
+public class UrlCheckRepository extends BaseRepository {
     public static void saveCheck(UrlCheck urlCheck) throws SQLException {
         var sql = "INSERT INTO url_checks (url_id, status_code, title, h1, description, created_at) "
                 + "values (?, ?, ?, ?, ?, ?)";
@@ -63,28 +64,30 @@ public class UrlCheckController extends BaseRepository {
         return result;
     }
 
-    public static List<Url> findLastCheck(List<Url> urls) throws SQLException {
-        var sql        = "SELECT * FROM url_checks WHERE url_id = ? ORDER BY created_at DESC LIMIT 1";
-        var listChecks = new ArrayList<UrlCheck>();
+    public static Map<Long, UrlCheck> findLastCheck() {
+        var sql = "SELECT uc.url_id, uc.status_code, uc.created_at "
+                + "FROM url_checks uc "
+                + "JOIN ( "
+                + "    SELECT url_id, MAX(created_at) AS max_created_at"
+                + "    FROM url_checks "
+                + "    GROUP BY url_id "
+                + ") uc_max ON uc.url_id = uc_max.url_id AND uc.created_at = uc_max.max_created_at;";
+        var result = new HashMap<Long, UrlCheck>();
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
-
-            for (var url : urls) {
-                statement.setLong(1, url.getId());
-                var resultSet = statement.executeQuery();
-
-                if (resultSet.next()) {
-                    var statusCode = resultSet.getInt("status_code");
-                    var created    = resultSet.getTimestamp("created_at");
-                    listChecks.add(new UrlCheck(statusCode, created));
-                    url.setLastStatusCodeCheck(statusCode);
-                    url.setLastDateCheck(created);
-                    url.setUrlCheckList(listChecks);
-                }
+            var resultSet = statement.executeQuery();
+            while (resultSet.next()) {
+                var urlCheck = UrlCheck.builder()
+                        .createdAt(resultSet.getTimestamp("created_at"))
+                        .urlId(resultSet.getLong("url_id"))
+                        .statusCode(resultSet.getInt("status_code"))
+                        .build();
+                result.put(urlCheck.getUrlId(), urlCheck);
             }
+            return result;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
-
-        return urls;
     }
 }
