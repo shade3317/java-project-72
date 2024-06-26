@@ -26,36 +26,37 @@ import org.jsoup.Jsoup;
 
 public class UrlController {
     public static void create(Context ctx) throws SQLException {
-        var page = new BasePage();
+        var    page         = new BasePage();
+        String formattedUrl = null;
 
         try {
             var url          = ctx.formParamAsClass("url", String.class).get();
             var uri          = new URI(url).toURL();
             String protocol  = uri.getProtocol();
             String authority = uri.getAuthority();
-            var formattedUrl = String.format("%s://%s", protocol, authority);
-
-            if (UrlRepository.findByName(formattedUrl).isPresent()) {
-                page.setFlash("Страница уже существует");
-                page.setFlashType("warning");
-            } else {
-                var urlName = new Url(formattedUrl);
-                UrlRepository.save(urlName);
-                page.setFlash("Страница успешно добавлена");
-                page.setFlashType("success");
-            }
-
-            var urls          = UrlRepository.getEntities();
-            var urlsWithCheck = UrlCheckController.findLastCheck(urls);
-            var urlsPage      = new UrlsPage(urlsWithCheck);
-
-            ctx.render("urls/index.jte", Map.of("page", page, "urlsPage", urlsPage));
+            formattedUrl = String.format("%s://%s", protocol, authority);
         } catch (MalformedURLException | IllegalArgumentException | ValidationException | URISyntaxException e) {
             page.setFlash("Некорректный URL");
             page.setFlashType("danger");
 
             ctx.render("index.jte", Collections.singletonMap("page", page));
         }
+
+        if (UrlRepository.findByName(formattedUrl).isPresent()) {
+            page.setFlash("Страница уже существует");
+            page.setFlashType("warning");
+        } else {
+            var urlName = new Url(formattedUrl);
+            UrlRepository.save(urlName);
+            page.setFlash("Страница успешно добавлена");
+            page.setFlashType("success");
+        }
+
+        var urls          = UrlRepository.getEntities();
+        var urlsWithCheck = UrlCheckController.findLastCheck(urls);
+        var urlsPage      = new UrlsPage(urlsWithCheck);
+
+        ctx.render("urls/index.jte", Map.of("page", page, "urlsPage", urlsPage));
     }
 
     public static void index(Context ctx) throws SQLException {
