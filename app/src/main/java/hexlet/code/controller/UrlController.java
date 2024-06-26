@@ -27,7 +27,7 @@ import org.jsoup.Jsoup;
 public class UrlController {
     public static void create(Context ctx) throws SQLException {
         var    page         = new BasePage();
-        String formattedUrl = null;
+        String formattedUrl;
 
         try {
             var url          = ctx.formParamAsClass("url", String.class).get();
