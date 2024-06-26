@@ -40,6 +40,7 @@ public class UrlController {
             page.setFlashType("danger");
 
             ctx.render("index.jte", Collections.singletonMap("page", page));
+            return;
         }
 
         if (UrlRepository.findByName(formattedUrl).isPresent()) {
