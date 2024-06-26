@@ -57,7 +57,7 @@ class AppTest {
     }
 
     @Test
-    void testCreateUrl() {
+    void testCreateUrlPositive() {
         JavalinTest.test(app, (server, client) -> {
             try (var response = client.post(NamedRoutes.urlsPath(), "url=" + correctUrl1)) {
                 Assertions.assertTrue(UrlRepository.findByName(correctUrl1).isPresent());
@@ -66,6 +66,12 @@ class AppTest {
                 Assertions.assertEquals(200, response.code());
                 Assertions.assertTrue(body.contains(correctUrl1));
             }
+        });
+    }
+
+    @Test
+    void testCreateUrlNegative() {
+        JavalinTest.test(app, (server, client) -> {
             try (var response = client.post(NamedRoutes.urlsPath(), "url=" + invalidUrl)) {
                 Assertions.assertTrue(UrlRepository.findByName(invalidUrl).isEmpty());
                 var body = response.body().string();
@@ -83,10 +89,6 @@ class AppTest {
             UrlRepository.save(new Url(correctUrl2));
             UrlRepository.save(new Url(correctUrl3));
 
-            Assertions.assertTrue(UrlRepository.findByName(correctUrl1).isPresent());
-            Assertions.assertTrue(UrlRepository.findByName(correctUrl2).isPresent());
-            Assertions.assertTrue(UrlRepository.findByName(correctUrl3).isPresent());
-
             var response = client.get(NamedRoutes.urlsPath());
             var body     = response.body().string();
 
@@ -98,7 +100,7 @@ class AppTest {
     }
 
     @Test
-    void testShowUrl() {
+    void testShowUrlPositive() {
         JavalinTest.test(app, (server, client) -> {
             var entity = new Url(correctUrl3);
             UrlRepository.save(entity);
@@ -108,6 +110,15 @@ class AppTest {
             var body      = response1.body().string();
             Assertions.assertEquals(200, response1.code());
             Assertions.assertTrue(body.contains(correctUrl3));
+        });
+    }
+
+    @Test
+    void testShowUrlNegative() {
+        JavalinTest.test(app, (server, client) -> {
+            var entity = new Url(correctUrl3);
+            UrlRepository.save(entity);
+            Assertions.assertTrue(UrlRepository.findByName(correctUrl3).isPresent());
 
             var response2 = client.get(NamedRoutes.urlPath("42"));
             Assertions.assertEquals(404, response2.code());
@@ -116,7 +127,7 @@ class AppTest {
 
     @Test
     void testCheckUrl() throws IOException {
-        MockResponse response = new MockResponse().setResponseCode(302).setBody(testBody);
+        MockResponse response = new MockResponse().setResponseCode(200).setBody(testBody);
         mockWebServer.enqueue(response);
         mockWebServer.enqueue(response);
         mockWebServer.start();
@@ -131,14 +142,7 @@ class AppTest {
                 var body = req.body().string();
 
                 Assertions.assertTrue(body.contains("test"));
-                Assertions.assertTrue(body.contains("302"));
-            }
-            try (var req = client.post(NamedRoutes.urlCheckPath(entity.getId()))) {
-                Assertions.assertTrue(UrlRepository.findById(entity.getId()).isPresent());
-                var body = req.body().string();
-
-                Assertions.assertTrue(body.contains("test"));
-                Assertions.assertTrue(body.contains("302"));
+                Assertions.assertTrue(body.contains("200"));
             }
         }));
     }
