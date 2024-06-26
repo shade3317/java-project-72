@@ -8,7 +8,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -54,9 +53,7 @@ public class UrlRepository extends BaseRepository {
             }
         }
 
-        return result.stream()
-                .sorted(Comparator.comparing(Url::getId).reversed())
-                .collect(Collectors.toList());
+        return result.stream().collect(Collectors.toList());
     }
 
     public static Optional<Url> findById(Long id) throws SQLException {
