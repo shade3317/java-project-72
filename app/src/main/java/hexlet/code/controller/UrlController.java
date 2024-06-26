@@ -18,6 +18,7 @@ import java.util.Collections;
 
 import io.javalin.http.Context;
 import io.javalin.http.NotFoundResponse;
+import io.javalin.validation.ValidationException;
 import kong.unirest.Unirest;
 import kong.unirest.UnirestException;
 import org.jsoup.Jsoup;
@@ -49,7 +50,7 @@ public class UrlController {
             var urlsPage      = new UrlsPage(urlsWithCheck);
 
             ctx.render("urls/index.jte", Map.of("page", page, "urlsPage", urlsPage));
-        } catch (MalformedURLException | URISyntaxException e) {
+        } catch (MalformedURLException | IllegalArgumentException | ValidationException | URISyntaxException e) {
             page.setFlash("Некорректный URL");
             page.setFlashType("danger");
 
