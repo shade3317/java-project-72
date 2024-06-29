@@ -64,7 +64,7 @@ public class UrlCheckRepository extends BaseRepository {
         return result;
     }
 
-    public static Map<Long, UrlCheck> findLastCheck() {
+    public static Map<Long, UrlCheck> findLastChecks() {
         var sql = "SELECT uc.url_id, uc.status_code, uc.created_at "
                 + "FROM url_checks uc "
                 + "JOIN ( "

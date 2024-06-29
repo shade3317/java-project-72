@@ -60,7 +60,7 @@ public class UrlController {
 
     public static void index(Context ctx) throws SQLException {
         var urls      = UrlRepository.getEntities();
-        var urlChecks = UrlCheckRepository.findLastCheck();
+        var urlChecks = UrlCheckRepository.findLastChecks();
         var page  = new UrlsPage(urls, urlChecks);
 
         ctx.render("urls/index.jte", Collections.singletonMap("page", page));
